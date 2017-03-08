@@ -53,6 +53,19 @@ function success () {
     echo "[OK]"
 }
 
+function check-cert-expiration () {
+  printf "Checking expiration of certificate: "
+  DATE=$(date -u +"%b %-d %R:%S %Y")
+  CERT_EXP=$(openssl x509 -noout -enddate -in $CERT_FILE | sed -e 's/notAfter=//' | awk '{$NF="";}1')
+  DATE_TODAY=`date -d"${DATE}" +%Y%m%d%H%M%S`
+  CERT_DATE=`date -d"${CERT_EXP}" +%Y%m%d%H%M%S`
+  if [ $DATE_TODAY -gt $CERT_DATE ]; then
+    error 6 "The certificate \"$CERT_FILE\" already expired on: $CERT_EXP"
+  else
+    success
+  fi
+}
+
 function show-details () {
     printf "Validating the certificate "
     CERT_SUBJECT=$(openssl x509 -noout -subject -in $CERT_FILE)
@@ -81,6 +94,7 @@ function check-ca-bundle () {
     fi
 }
 
+check-cert-expiration
 show-details
 check-priv-key
 check-ca-bundle
